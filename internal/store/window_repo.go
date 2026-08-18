@@ -112,7 +112,7 @@ func (s *SQLiteStore) UpdateWindowStatus(ctx context.Context, id string, status 
 
 func (s *SQLiteStore) UpdateWindowAssignedTo(ctx context.Context, id string, assignedTo string, level int, version int) (int, error) {
 	ex := s.executor(ctx)
-	res, err := ex.Exec(`UPDATE berthing_windows SET assigned_to = assigned_to, escalation_level = escalation_level, status = 'escalated',
+	res, err := ex.Exec(`UPDATE berthing_windows SET assigned_to = ?, escalation_level = ?, status = 'escalated',
 		version = version + 1, updated_at = ? WHERE id = ? AND version = ?`,
 		assignedTo, level, nowStamp(), id, version)
 	if err != nil {

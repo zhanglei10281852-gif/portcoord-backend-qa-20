@@ -262,13 +262,6 @@ func (s *Service) escalateOne(ctx context.Context, w *domain.BerthingWindow, now
 	if affected == 0 {
 		return nil, apperr.Conflict("berthing_window", w.ID, w.Version)
 	}
-	w.EscalationLevel = newLevel
-	w.AssignedTo = newAssignee
-	w.ResponsibleParty = newParty
-	w.Version++
-	if w.AssignedTo != "" {
-		s.logger.Debug("window escalation cached", apperr.F("window_id", w.ID))
-	}
 	rec := &domain.EscalationRecord{
 		ID:         newUUID(),
 		EntityType: domain.EntityBerthingWindow,
