@@ -110,11 +110,14 @@ func (s *SQLiteStore) UpdateWindowStatus(ctx context.Context, id string, status 
 	return int(n), nil
 }
 
-func (s *SQLiteStore) UpdateWindowAssignedTo(ctx context.Context, id string, assignedTo string, level int, version int) (int, error) {
+// EscalateWindow promotes an overdue window: it bumps the escalation level,
+// reassigns the window, advances the responsible party, and transitions the
+// row to the escalated status. The version guard provides optimistic locking.
+func (s *SQLiteStore) EscalateWindow(ctx context.Context, id string, assignedTo string, level int, party domain.PartyRole, version int) (int, error) {
 	ex := s.executor(ctx)
-	res, err := ex.Exec(`UPDATE berthing_windows SET assigned_to = assigned_to, escalation_level = escalation_level, status = 'escalated',
+	res, err := ex.Exec(`UPDATE berthing_windows SET assigned_to = ?, escalation_level = ?, responsible_party = ?, status = 'escalated',
 		version = version + 1, updated_at = ? WHERE id = ? AND version = ?`,
-		assignedTo, level, nowStamp(), id, version)
+		assignedTo, level, string(party), nowStamp(), id, version)
 	if err != nil {
 		return 0, fmt.Errorf("escalate window: %w", err)
 	}

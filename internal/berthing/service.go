@@ -252,10 +252,12 @@ func (s *Service) EscalateOverdue(ctx context.Context) ([]*domain.EscalationResu
 
 // escalateOne escalates a single overdue window.
 func (s *Service) escalateOne(ctx context.Context, w *domain.BerthingWindow, now time.Time) (*domain.EscalationResult, error) {
-	newLevel := w.EscalationLevel + 1
-	newParty := escalateParty(w.ResponsibleParty)
+	fromLevel := w.EscalationLevel
+	fromParty := w.ResponsibleParty
+	newLevel := fromLevel + 1
+	newParty := escalateParty(fromParty)
 	newAssignee := fmt.Sprintf("level-%d-assignee", newLevel)
-	affected, err := s.windows.UpdateWindowAssignedTo(ctx, w.ID, newAssignee, newLevel, w.Version)
+	affected, err := s.windows.EscalateWindow(ctx, w.ID, newAssignee, newLevel, newParty, w.Version)
 	if err != nil {
 		return nil, err
 	}
@@ -273,7 +275,7 @@ func (s *Service) escalateOne(ctx context.Context, w *domain.BerthingWindow, now
 		ID:         newUUID(),
 		EntityType: domain.EntityBerthingWindow,
 		EntityID:   w.ID,
-		FromLevel:  w.EscalationLevel,
+		FromLevel:  fromLevel,
 		ToLevel:    newLevel,
 		Reason:     fmt.Sprintf("deadline exceeded at %s", now.Format(time.RFC3339)),
 		Timestamp:  now,
@@ -284,12 +286,12 @@ func (s *Service) escalateOne(ctx context.Context, w *domain.BerthingWindow, now
 		Action:     "escalate_window",
 		EntityType: domain.EntityBerthingWindow,
 		EntityID:   w.ID,
-		Before:     map[string]any{"level": w.EscalationLevel, "party": string(w.ResponsibleParty)},
+		Before:     map[string]any{"level": fromLevel, "party": string(fromParty)},
 		After:      map[string]any{"level": newLevel, "party": string(newParty)},
 	})
 	return &domain.EscalationResult{
 		WindowID:    w.ID,
-		FromLevel:   w.EscalationLevel,
+		FromLevel:   fromLevel,
 		ToLevel:     newLevel,
 		NewParty:    newParty,
 		NewAssignee: newAssignee,

@@ -31,7 +31,7 @@ type WindowRepo interface {
 	GetWindow(ctx context.Context, id string) (*domain.BerthingWindow, error)
 	ListWindows(ctx context.Context, q domain.PageQuery) (domain.PageResult[*domain.BerthingWindow], error)
 	UpdateWindowStatus(ctx context.Context, id string, status domain.WindowStatus, version int) (int, error)
-	UpdateWindowAssignedTo(ctx context.Context, id string, assignedTo string, level int, version int) (int, error)
+	EscalateWindow(ctx context.Context, id string, assignedTo string, level int, party domain.PartyRole, version int) (int, error)
 	ListExpiredWindows(ctx context.Context, now string) ([]*domain.BerthingWindow, error)
 	ListWindowsByStatus(ctx context.Context, status domain.WindowStatus) ([]*domain.BerthingWindow, error)
 	CountWindowsByStatus(ctx context.Context, status domain.WindowStatus) (int, error)
